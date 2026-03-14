@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:host {
+  all: initial;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+#gpticker-app {
+  color: #dbeafe;
+  display: contents;
+  font-family:
+    "IBM Plex Sans",
+    "Segoe UI",
+    sans-serif;
+}
+
+#gpticker-app[data-theme="dark"] {
+  color: #dbeafe;
+  color-scheme: dark;
+}
+
+#gpticker-app[data-theme="light"] {
+  color: #0f172a;
+  color-scheme: light;
+}
+
+button {
+  font: inherit;
+}
