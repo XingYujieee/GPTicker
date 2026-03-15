@@ -98,12 +98,58 @@ export function SidebarShell({
   const [panelPosition, setPanelPosition] = useState<FloatingPanelPosition>(() =>
     clampPanelPosition(ui.position, ui.minimized)
   );
+  const getChatGptThemeMode = () => {
+    if (typeof document === "undefined") {
+      return null;
+    }
+
+    const doc = document.documentElement;
+
+    // ChatGPT currently uses data attributes to store theme preference.
+    // Examples:
+    // - <html data-color-mode="dark"> (common)
+    // - <html data-theme="dark"> (possible fallback)
+    // - class="dark" (common tailwind-style)
+    const colorMode = doc.getAttribute("data-color-mode");
+    if (colorMode === "dark" || colorMode === "light") {
+      return colorMode;
+    }
+
+    const dataTheme = doc.getAttribute("data-theme");
+    if (dataTheme === "dark" || dataTheme === "light") {
+      return dataTheme;
+    }
+
+    if (doc.classList.contains("dark")) {
+      return "dark";
+    }
+
+    if (doc.classList.contains("light")) {
+      return "light";
+    }
+
+    return null;
+  };
+
+  const prefersDarkFromChatGpt = () => {
+    const theme = getChatGptThemeMode();
+    if (theme === "dark") {
+      return true;
+    }
+    if (theme === "light") {
+      return false;
+    }
+
+    // Fallback to system preference
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  };
+
   const [prefersDark, setPrefersDark] = useState(() => {
     if (typeof window === "undefined") {
       return true;
     }
 
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return prefersDarkFromChatGpt();
   });
   const dragStateRef = useRef<{
     startX: number;
@@ -118,15 +164,31 @@ export function SidebarShell({
   const drawerPlacement = resolveDrawerPlacement(panelPosition.left);
 
   useEffect(() => {
+    // Sync with ChatGPT 的「常规 - 外观」设置
+    const updateFromChatGpt = () => {
+      setPrefersDark(prefersDarkFromChatGpt());
+    };
+
+    updateFromChatGpt();
+
+    // 监听 HTML 属性变化（ChatGPT 切换深色/浅色时会更新 data-color-mode）
+    const observer = new MutationObserver(updateFromChatGpt);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-color-mode", "data-theme"],
+      attributeOldValue: false
+    });
+
+    // 兼容系统主题切换
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleChange = (event: MediaQueryListEvent) => {
       setPrefersDark(event.matches);
     };
 
-    setPrefersDark(mediaQuery.matches);
     mediaQuery.addEventListener("change", handleChange);
 
     return () => {
+      observer.disconnect();
       mediaQuery.removeEventListener("change", handleChange);
     };
   }, []);

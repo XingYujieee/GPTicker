@@ -29,7 +29,7 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       input: {
-        "content-main": resolve(rootDir, "src/content/index.tsx")
+        "content": resolve(rootDir, "src/content/index.tsx")
       },
       output: {
         entryFileNames: "assets/[name].js",
